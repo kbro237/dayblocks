@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weekly Schedule</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            max-width: 100%;
+            box-sizing: border-box;
+        }
+        .day-container {
+            margin-bottom: 8px;
+        }
+        .blocks {
+            display: flex;
+            gap: 6px;
+        }
+        .block {
+            flex: 1;
+            padding: 12px 6px;
+            background-color: #f0f0f0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            text-align: center;
+            cursor: pointer;
+            user-select: none;
+            font-size: 1.2em;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        .block.active {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .total {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #333;
+            color: white;
+            padding: 12px;
+            text-align: center;
+            font-size: 1.1em;
+        }
+        #app {
+            margin-bottom: 60px;
+        }
+        .day-name {
+            position: absolute;
+            top: 2px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.7em;
+            color: #666;
+            font-weight: normal;
+        }
+        .block.active .day-name {
+            color: rgba(255, 255, 255, 0.8);
+        }
+    </style>
+</head>
+<body>
+    <div id="app"></div>
+    <div class="total">Time Blocks: <span id="total-units">0</span></div>
+
+    <script>
+        const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        const periods = ['AM', 'PM', 'EVE'];
+        let totalUnits = 0;
+        let blockStates = {};
+
+        // Load saved states when page loads
+        function loadSavedStates() {
+            const savedStates = localStorage.getItem('blockStates');
+            if (savedStates) {
+                blockStates = JSON.parse(savedStates);
+                totalUnits = Object.values(blockStates).filter(state => state).length;
+                updateTotal();
+            }
+        }
+
+        function createDayBlocks() {
+            const app = document.getElementById('app');
+            days.forEach(day => {
+                const dayContainer = document.createElement('div');
+                dayContainer.className = 'day-container';
+                
+                const blocks = document.createElement('div');
+                blocks.className = 'blocks';
+                
+                periods.forEach((period, index) => {
+                    const block = document.createElement('div');
+                    block.className = 'block';
+                    
+                    // Add day name to AM block only
+                    if (index === 0) {
+                        const dayName = document.createElement('div');
+                        dayName.className = 'day-name';
+                        dayName.textContent = day;
+                        block.appendChild(dayName);
+                    }
+                    
+                    const periodText = document.createElement('div');
+                    periodText.textContent = period;
+                    block.appendChild(periodText);
+                    
+                    // Set initial state from saved data
+                    const blockId = `${day}-${period}`;
+                    if (blockStates[blockId]) {
+                        block.classList.add('active');
+                    }
+                    
+                    block.addEventListener('click', () => toggleBlock(block, blockId));
+                    blocks.appendChild(block);
+                });
+                
+                dayContainer.appendChild(blocks);
+                app.appendChild(dayContainer);
+            });
+        }
+
+        function toggleBlock(block, blockId) {
+            if (block.classList.contains('active')) {
+                block.classList.remove('active');
+                blockStates[blockId] = false;
+                totalUnits--;
+            } else {
+                block.classList.add('active');
+                blockStates[blockId] = true;
+                totalUnits++;
+            }
+            updateTotal();
+            saveStates();
+        }
+
+        function updateTotal() {
+            document.getElementById('total-units').textContent = totalUnits;
+        }
+
+        function saveStates() {
+            localStorage.setItem('blockStates', JSON.stringify(blockStates));
+        }
+
+        // Load saved states before creating blocks
+        loadSavedStates();
+        createDayBlocks();
+    </script>
+</body>
+</html>
